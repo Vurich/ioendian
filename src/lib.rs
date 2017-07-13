@@ -1,9 +1,11 @@
+use std::fmt::{Debug, Display, Formatter, Error};
+
 pub trait EndianBufFor<Out> {
     fn reverse(&mut self);
     fn native(self) -> Out;
 }
 
-pub trait FromBuf: Sized {
+pub trait FromBuf: Sized + Clone {
     type Buf: EndianBufFor<Self>;
 
     fn from_buf(buf: Self::Buf) -> Self {
@@ -20,6 +22,30 @@ pub trait IntoNativeEndian {
 pub struct Big<T: FromBuf>(pub T::Buf);
 #[derive(Clone)]
 pub struct Little<T: FromBuf>(pub T::Buf);
+
+impl<T: FromBuf + Debug> Debug for Big<T> where Self: Clone {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        write!(f, "Big({:?})", self.clone().native())
+    }
+}
+
+impl<T: FromBuf + Debug> Debug for Little<T> where Self: Clone {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        write!(f, "Big({:?})", self.clone().native())
+    }
+}
+
+impl<T: FromBuf + Display> Display for Big<T> where Self: Clone {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        self.clone().native().fmt(f)
+    }
+}
+
+impl<T: FromBuf + Debug> Display for Little<T> where Self: Clone {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        self.clone().native().fmt(f)
+    }
+}
 
 macro_rules! impl_buf_traits {
     ($type:ty, $count:expr) => {

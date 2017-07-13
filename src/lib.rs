@@ -77,6 +77,9 @@ impl_buf_traits!(i16, 2);
 impl_buf_traits!(i32, 4);
 impl_buf_traits!(i64, 8);
 
+impl_buf_traits!(f32, 4);
+impl_buf_traits!(f64, 8);
+
 #[cfg(target_endian = "big")]
 mod trait_impls {
     use super::{FromBuf, EndianBufFor, IntoNativeEndian, Big, Little};

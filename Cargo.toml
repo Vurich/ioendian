@@ -1,6 +1,6 @@
 [package]
 name = "ioendian"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Vurich <jackefransham@hotmail.co.uk>"]
 description = "Simple wrapper type to declaratively mark a struct as big-endian or little-endian. Useful for when doing #[repr(C)] transmutes from IO data."
 license = "MIT"

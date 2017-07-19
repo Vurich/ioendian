@@ -11,6 +11,8 @@ pub trait FromBuf: Sized + Clone {
     fn from_buf(buf: Self::Buf) -> Self {
         buf.native()
     }
+
+    fn into_buf(self) -> Self::Buf;
 }
 
 pub trait IntoNativeEndian {
@@ -23,25 +25,33 @@ pub struct Big<T: FromBuf>(pub T::Buf);
 #[derive(Clone)]
 pub struct Little<T: FromBuf>(pub T::Buf);
 
-impl<T: FromBuf + Debug> Debug for Big<T> where Self: Clone {
+impl<T: FromBuf + Debug> Debug for Big<T>
+    where Self: Clone
+{
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         write!(f, "Big({:?})", self.clone().native())
     }
 }
 
-impl<T: FromBuf + Debug> Debug for Little<T> where Self: Clone {
+impl<T: FromBuf + Debug> Debug for Little<T>
+    where Self: Clone
+{
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         write!(f, "Big({:?})", self.clone().native())
     }
 }
 
-impl<T: FromBuf + Display> Display for Big<T> where Self: Clone {
+impl<T: FromBuf + Display> Display for Big<T>
+    where Self: Clone
+{
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         self.clone().native().fmt(f)
     }
 }
 
-impl<T: FromBuf + Debug> Display for Little<T> where Self: Clone {
+impl<T: FromBuf + Debug> Display for Little<T>
+    where Self: Clone
+{
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         self.clone().native().fmt(f)
     }
@@ -60,6 +70,10 @@ macro_rules! impl_buf_traits {
 
         impl FromBuf for $type {
             type Buf = [u8; $count];
+
+            fn into_buf(self) -> Self::Buf {
+                unsafe { ::std::mem::transmute(self) }
+            }
         }
 
         impl Copy for Big<$type> {}
@@ -84,6 +98,20 @@ impl_buf_traits!(f64, 8);
 mod trait_impls {
     use super::{FromBuf, EndianBufFor, IntoNativeEndian, Big, Little};
 
+    impl<T: FromBuf> Big<T> {
+        fn new(inner: T) -> Self {
+            Big(inner.into_buf())
+        }
+    }
+
+    impl<T: FromBuf> Little<T> {
+        fn new(inner: T) -> Self {
+            let mut buf = inner.into_buf();
+            buf.reverse();
+            Little(buf)
+        }
+    }
+
     impl<T: FromBuf> IntoNativeEndian for Big<T> {
         type Out = T;
 
@@ -107,6 +135,20 @@ mod trait_impls {
 #[cfg(target_endian = "little")]
 mod trait_impls {
     use super::{FromBuf, EndianBufFor, IntoNativeEndian, Big, Little};
+
+    impl<T: FromBuf> Big<T> {
+        pub fn new(inner: T) -> Self {
+            let mut buf = inner.into_buf();
+            buf.reverse();
+            Big(buf)
+        }
+    }
+
+    impl<T: FromBuf> Little<T> {
+        pub fn new(inner: T) -> Self {
+            Little(inner.into_buf())
+        }
+    }
 
     impl<T: FromBuf> IntoNativeEndian for Big<T> {
         type Out = T;

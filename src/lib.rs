@@ -1,22 +1,28 @@
 use std::fmt::{Debug, Display, Formatter, Error};
 
 pub trait EndianBufFor<Out> {
+    #[inline(always)]
     fn reverse(&mut self);
+    #[inline(always)]
     fn native(self) -> Out;
 }
 
 pub trait FromBuf: Sized + Clone {
     type Buf: EndianBufFor<Self>;
 
+    #[inline(always)]
     fn from_buf(buf: Self::Buf) -> Self {
         buf.native()
     }
 
+    #[inline(always)]
     fn into_buf(self) -> Self::Buf;
 }
 
 pub trait IntoNativeEndian {
     type Out;
+
+    #[inline(always)]
     fn native(self) -> Self::Out;
 }
 
@@ -28,6 +34,7 @@ pub struct Little<T: FromBuf>(pub T::Buf);
 impl<T: FromBuf + Debug> Debug for Big<T>
     where Self: Clone
 {
+    #[inline(always)]
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         write!(f, "Big({:?})", self.clone().native())
     }
@@ -36,6 +43,7 @@ impl<T: FromBuf + Debug> Debug for Big<T>
 impl<T: FromBuf + Debug> Debug for Little<T>
     where Self: Clone
 {
+    #[inline(always)]
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         write!(f, "Big({:?})", self.clone().native())
     }
@@ -44,6 +52,7 @@ impl<T: FromBuf + Debug> Debug for Little<T>
 impl<T: FromBuf + Display> Display for Big<T>
     where Self: Clone
 {
+    #[inline(always)]
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         self.clone().native().fmt(f)
     }
@@ -52,6 +61,7 @@ impl<T: FromBuf + Display> Display for Big<T>
 impl<T: FromBuf + Debug> Display for Little<T>
     where Self: Clone
 {
+    #[inline(always)]
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         self.clone().native().fmt(f)
     }
@@ -60,9 +70,12 @@ impl<T: FromBuf + Debug> Display for Little<T>
 macro_rules! impl_buf_traits {
     ($type:ty, $count:expr) => {
         impl EndianBufFor<$type> for [u8; $count] {
+            #[inline(always)]
             fn reverse(&mut self) {
                 self.as_mut().reverse()
             }
+
+            #[inline(always)]
             fn native(self) -> $type {
                 unsafe { ::std::mem::transmute(self) }
             }
@@ -71,6 +84,7 @@ macro_rules! impl_buf_traits {
         impl FromBuf for $type {
             type Buf = [u8; $count];
 
+            #[inline(always)]
             fn into_buf(self) -> Self::Buf {
                 unsafe { ::std::mem::transmute(self) }
             }
@@ -99,12 +113,14 @@ mod trait_impls {
     use super::{FromBuf, EndianBufFor, IntoNativeEndian, Big, Little};
 
     impl<T: FromBuf> Big<T> {
+        #[inline(always)]
         fn new(inner: T) -> Self {
             Big(inner.into_buf())
         }
     }
 
     impl<T: FromBuf> Little<T> {
+        #[inline(always)]
         fn new(inner: T) -> Self {
             let mut buf = inner.into_buf();
             buf.reverse();
@@ -137,6 +153,7 @@ mod trait_impls {
     use super::{FromBuf, EndianBufFor, IntoNativeEndian, Big, Little};
 
     impl<T: FromBuf> Big<T> {
+        #[inline(always)]
         pub fn new(inner: T) -> Self {
             let mut buf = inner.into_buf();
             buf.reverse();
@@ -145,6 +162,7 @@ mod trait_impls {
     }
 
     impl<T: FromBuf> Little<T> {
+        #[inline(always)]
         pub fn new(inner: T) -> Self {
             Little(inner.into_buf())
         }
